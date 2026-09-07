@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>IKI1UC · AtmoBoard</title>
+<title>IKI1UC · AtmoBoard · Anime Water Edition</title>
 
 <style>
     body {
@@ -23,18 +23,21 @@
 
 <body>
 
-<h1>IKI1UC · Atmospheric Board · Anime Edition</h1>
+<h1>IKI1UC · Atmospheric Board · Anime Water Edition</h1>
 
 <!-- CANVAS -->
 <canvas id="atmoCanvas" width="450" height="450"></canvas>
 
 <!-- AtmoBoard laden -->
-<script src="anime/AtmoBoard.js"></script>
+<script src="AtmoBoard.js"></script>
 
 <!-- Initialisierung -->
 <script>
 const atmoCanvas = document.getElementById('atmoCanvas');
+
+// WICHTIG: 9×9 → Wasser-Effekt kommt zurück
 const atmo = new AtmoBoard(atmoCanvas, 9);
+
 atmo.start();
 </script>
 
