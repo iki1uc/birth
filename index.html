@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>IKI1UC · AtmoBoard · Anime Water Edition</title>
+<title>IKI1UC · Atmospheric Board · Anime Edition</title>
 
 <style>
     body {
@@ -11,19 +11,36 @@
         font-family:Consolas;
         padding:20px;
     }
-    h1 { color:#6cf; }
+
+    h1 {
+        color:#6cf;
+        margin-bottom:10px;
+    }
+
     #atmoCanvas {
         background:#000;
         border:1px solid #333;
         display:block;
         margin-top:20px;
+        width:450px;
+        height:450px;
+    }
+
+    .info {
+        margin-top:10px;
+        font-size:13px;
+        color:#6cf;
     }
 </style>
 </head>
 
 <body>
 
-<h1>IKI1UC · Atmospheric Board · Anime Water Edition</h1>
+<h1>IKI1UC · Atmospheric Board · Anime Edition</h1>
+
+<div class="info">
+    Geo‑Matrix · 81‑Anime‑Slots · Wasser‑Shader · Drift‑Pulse · Partikel‑Flow
+</div>
 
 <!-- CANVAS -->
 <canvas id="atmoCanvas" width="450" height="450"></canvas>
@@ -33,12 +50,14 @@
 
 <!-- Initialisierung -->
 <script>
-const atmoCanvas = document.getElementById('atmoCanvas');
+    // Canvas holen
+    const atmoCanvas = document.getElementById('atmoCanvas');
 
-// WICHTIG: 9×9 → Wasser-Effekt kommt zurück
-const atmo = new AtmoBoard(atmoCanvas, 9);
+    // Board erzeugen (9×9 → Wasser‑Anime aktiv)
+    const atmo = new AtmoBoard(atmoCanvas, 9);
 
-atmo.start();
+    // Starten
+    atmo.start();
 </script>
 
 </body>
