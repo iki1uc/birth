@@ -1,0 +1,9 @@
+#SCAN
+LOAD: 81.rom
+LOAD: 81.scan
+LOAD: 81.tmp
+LOAD: 81.video
+LOAD: 9.tmp
+LOAD: TMP.tmp
+SYNC: TRUE
+STATE: READY

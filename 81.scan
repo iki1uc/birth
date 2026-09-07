@@ -1,0 +1,28 @@
+export function respoSlot(i) {
+    return {
+        value: Math.sin(i),
+        pulse: Math.sin(Date.now() / 120),
+        drift: Math.cos(Date.now() / 240),
+        angle: (Date.now() / 10) % 360
+    };
+}
+
+export function scan9hoch9() {
+    let ready = 0;
+    let errors = 0;
+
+    for (let i = 0; i < 81; i++) {
+        const slot = respoSlot(i);
+
+        const ok =
+            slot.value >= -2 && slot.value <= 2 &&
+            Math.abs(slot.pulse) <= 1 &&
+            Math.abs(slot.drift) <= 1 &&
+            slot.angle >= 0 && slot.angle <= 360;
+
+        if (ok) ready++;
+        else errors++;
+    }
+
+    return { ready, errors };
+}

@@ -1,0 +1,9 @@
+#ANKER
+CORE: 81.rom
+SCAN: 81.scan
+TMP: 81.tmp
+VIDEO: 81.video
+SUBTMP: 9.tmp
+ROOM: NO1.room
+OPERATOR: TMP.tmp
+STATE: ACTIVE

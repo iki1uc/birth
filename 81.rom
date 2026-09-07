@@ -1,0 +1,12 @@
+ROM: 81.rom
+MODE: vector-station
+BILDUNG: 9hoch9
+CLUSTER: 81
+SLOTS: 81x9hoch9
+TOTAL: 6561
+
+SCAN: active
+RECALL: enabled
+REORGANIZED: true
+
+STATE: rdy
