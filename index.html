@@ -1,189 +1,200 @@
-// ============================================================
-// RAWATOR · LEBENSGEBER · 81-HOLOGRAMM · ANIME · SHUFFLE
-// ============================================================
+// ================================================================
+// ATMOSPHERIC BOARD · ANIME EDITION
+// Verbindet Geo‑Matrix‑Effekte mit 81 ANIME‑Slots
+// ================================================================
+class AtmoBoard {
+    constructor(canvas, boardSize = 8) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.boardSize = boardSize;
+        this.cellSize = canvas.width / boardSize;
+        this.angle = 0;
+        this.particles = [];
+        this.lines = [];
+        this.slots = []; // 81 Slots für 9×9 (wenn boardSize=9)
+        this.mood = 'anime';
+        this.running = true;
+        this.initSlots();
+        this.initLines();
+    }
 
-import { Atom } from './atom.js';
-import { Molecule } from './molecule.js';
-import { RAWATOR_81 } from './rawator-81.js';
-import { BEAM_KERNEL } from './beam.js';
-import { RAWATOR_START } from './rawator.js';
+    // ─── 81 SLOTS (wie in deinem ANIME‑System) ──────────────────────
+    initSlots() {
+        this.slots = [];
+        for (let i = 0; i < 81; i++) {
+            this.slots.push({
+                value: Math.sin(i * 0.2),
+                pulse: 0,
+                drift: 0,
+                angle: 0
+            });
+        }
+    }
 
-export const RAWATOR_LIFE = {
-    name: 'RAWATOR · Lebensgeber',
-    status: 'initialisiert',
-    vital: 0,
-    co2: 0,
-    wasser: 0,
-    sauerstoff: 0,
-    hologramm: [],
-    anime: [],
-    shuffle: [],
-    messgerät: {},
-    editor: {},
+    updateSlots(time) {
+        for (let i = 0; i < 81; i++) {
+            const s = this.slots[i];
+            s.value = Math.sin(i * 0.2 + time * 0.001);
+            s.pulse = Math.sin(time / 120 + i * 0.1);
+            s.drift = Math.cos(time / 240 + i * 0.05);
+            s.angle = (time / 10 + i * 4) % 360;
+        }
+    }
 
-    // ─── INIT ──────────────────────────────────────────────────
-    init() {
-        this.log('🧬 RAWATOR · Lebensgeber wird aktiviert...');
+    // ─── GEO‑MATRIX LINES ─────────────────────────────────────────────
+    initLines() {
+        this.lines = [];
+        for (let i = 0; i < 20; i++) {
+            const start = { x: Math.random() * this.canvas.width, y: Math.random() * this.canvas.height };
+            const end = { x: Math.random() * this.canvas.width, y: Math.random() * this.canvas.height };
+            this.lines.push({
+                start, end,
+                progress: Math.random(),
+                speed: 0.002 + Math.random() * 0.005,
+                width: 0.5 + Math.random() * 2,
+                color: `rgba(100,220,255,${0.05 + Math.random() * 0.15})`
+            });
+        }
+    }
 
-        // 1. Moleküle laden
-        const universe = this.getMolecules();
-        this.co2 = universe.co2;
-        this.wasser = universe.water;
-        this.sauerstoff = universe.oxygen;
-        this.vital = (this.co2.vital + this.wasser.vital + this.sauerstoff.vital) / 3;
+    setMood(mood) {
+        this.mood = mood;
+    }
 
-        // 2. 81-Hologramm-Raster laden
-        this.hologramm = RAWATOR_81();
+    resize(width, height) {
+        this.canvas.width = width;
+        this.canvas.height = height;
+        this.cellSize = width / this.boardSize;
+        this.initLines();
+    }
 
-        // 3. Beam-Kernel aktivieren
-        BEAM_KERNEL().then(() => {
-            this.log('🌐 BEAM KERNEL aktiv');
-            RAWATOR_START();
+    draw() {
+        const ctx = this.ctx;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const cs = this.cellSize;
+        const t = Date.now();
+
+        // Slots updaten
+        this.updateSlots(t);
+
+        // 1. Hintergrund – sanfter Puls
+        const pulseGlow = 0.1 + 0.05 * Math.sin(t / 500);
+        ctx.fillStyle = `rgba(0,0,20,${pulseGlow})`;
+        ctx.fillRect(0, 0, w, h);
+
+        // 2. Fließende Linien (Geo‑Matrix)
+        for (const line of this.lines) {
+            const p = (line.progress + t * line.speed * 0.001) % 1;
+            const x1 = line.start.x + (line.end.x - line.start.x) * p;
+            const y1 = line.start.y + (line.end.y - line.start.y) * p;
+            const x2 = line.start.x + (line.end.x - line.start.x) * ((p + 0.2) % 1);
+            const y2 = line.start.y + (line.end.y - line.start.y) * ((p + 0.2) % 1);
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = line.color;
+            ctx.lineWidth = line.width;
+            ctx.stroke();
+        }
+
+        // 3. 9×9 Felder mit ANIME‑Slot‑Werten
+        for (let r = 0; r < this.boardSize; r++) {
+            for (let c = 0; c < this.boardSize; c++) {
+                const idx = r * this.boardSize + c;
+                const slot = this.slots[idx] || { value: 0, pulse: 0, drift: 0, angle: 0 };
+                const x = c * cs;
+                const y = r * cs;
+
+                // Farbe basierend auf value + pulse
+                const val = slot.value * 0.5 + 0.5;
+                const pulse = slot.pulse * 0.3 + 0.7;
+                const rCol = Math.floor(80 + val * 120 + pulse * 40);
+                const gCol = Math.floor(100 + slot.drift * 30 + pulse * 20);
+                const bCol = Math.floor(200 + val * 30 + slot.drift * 20);
+
+                // Feld füllen (transparent, damit Schachfiguren sichtbar bleiben)
+                ctx.fillStyle = `rgba(${rCol}, ${gCol}, ${bCol}, 0.15)`;
+                ctx.fillRect(x, y, cs, cs);
+
+                // Geo‑Matrix‑ähnlicher Rahmen (pulsierend)
+                const borderPulse = 0.5 + 0.5 * Math.sin(t / 300 + idx * 0.1);
+                const borderColor = `rgba(${rCol+50}, ${gCol+50}, ${bCol+50}, ${0.1 + 0.1 * borderPulse})`;
+                ctx.strokeStyle = borderColor;
+                ctx.lineWidth = 0.5 + borderPulse * 0.5;
+                ctx.strokeRect(x, y, cs, cs);
+
+                // Winkel‑Indikator (kleiner Punkt, der sich dreht)
+                const angleRad = slot.angle * Math.PI / 180;
+                const dotX = x + cs/2 + Math.cos(angleRad) * cs * 0.3;
+                const dotY = y + cs/2 + Math.sin(angleRad) * cs * 0.3;
+                ctx.fillStyle = `rgba(255,255,255,${0.1 + 0.1 * borderPulse})`;
+                ctx.beginPath();
+                ctx.arc(dotX, dotY, 1.5 + borderPulse, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // 4. Partikel (wie in der Geo‑Matrix)
+        if (Math.random() > 0.93) {
+            const idx = Math.floor(Math.random() * 81);
+            const slot = this.slots[idx] || { value: 0, pulse: 0, drift: 0 };
+            const r = Math.floor(idx / 9);
+            const c = idx % 9;
+            const x = c * cs + cs / 2;
+            const y = r * cs + cs / 2;
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 0.5 + Math.random() * 2;
+            this.particles.push({
+                x, y,
+                vx: Math.cos(angle) * speed + slot.drift * 0.5,
+                vy: Math.sin(angle) * speed + slot.drift * 0.5,
+                life: 1,
+                size: 1 + Math.random() * 3,
+                color: `rgba(${120 + slot.value * 80}, ${180 + slot.pulse * 60}, 255, ${0.3 + 0.3 * slot.pulse})`
+            });
+        }
+
+        this.particles = this.particles.filter(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life -= 0.003;
+            if (p.life <= 0) return false;
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            return true;
         });
 
-        // 4. Shuffle Dancer initialisieren
-        this.shuffle = this.initShuffle();
-
-        // 5. Anime-Frames generieren
-        this.anime = this.initAnime();
-
-        // 6. Messgerät einrichten
-        this.messgerät = this.initMessgeraet();
-
-        // 7. Editor einrichten
-        this.editor = this.initEditor();
-
-        this.status = 'lebendig';
-        this.log('✅ RAWATOR · LEBENDIG · 81-HOLOGRAMM BEREIT');
-        return this.status;
-    },
-
-    // ─── MOLEKÜLE ─────────────────────────────────────────────
-    getMolecules() {
-        return {
-            water: Molecule.H2O(),
-            oxygen: Molecule.O2(),
-            co2: Molecule.CO2()
-        };
-    },
-
-    // ─── SHUFFLE DANCER ───────────────────────────────────────
-    initShuffle() {
-        const moves = ['↻', '↺', '↑', '↓', '←', '→', '↗', '↘', '↖', '↙'];
-        const sequence = [];
-        for (let i = 0; i < 81; i++) {
-            sequence.push({
-                step: i + 1,
-                move: moves[i % moves.length],
-                frame: this.hologramm[i]?.id || `RAW-${i+1}`,
-                vital: this.vital * (0.8 + Math.random() * 0.4)
-            });
-        }
-        return sequence;
-    },
-
-    // ─── ANIME ──────────────────────────────────────────────────
-    initAnime() {
-        const frames = [];
-        for (let i = 0; i < 81; i++) {
-            const holo = this.hologramm[i] || { id: `RAW-${i+1}`, neutral: true };
-            frames.push({
-                id: `ANIME-${i+1}`,
-                frame: holo.id,
-                vital: this.vital * (0.7 + Math.random() * 0.6),
-                shuffle: this.shuffle[i]?.move || '●',
-                co2: this.co2.vital * (0.5 + Math.random() * 0.5),
-                wasser: this.wasser.vital * (0.5 + Math.random() * 0.5),
-                sauerstoff: this.sauerstoff.vital * (0.5 + Math.random() * 0.5)
-            });
-        }
-        return frames;
-    },
-
-    // ─── UNIVERSALMESSGERÄT ──────────────────────────────────
-    initMessgeraet() {
-        return {
-            vital: this.vital,
-            co2: this.co2,
-            wasser: this.wasser,
-            sauerstoff: this.sauerstoff,
-            hologramm: this.hologramm.length,
-            anime: this.anime.length,
-            shuffle: this.shuffle.length,
-            status: this.status
-        };
-    },
-
-    // ─── UNIVERSAL EDITOR ──────────────────────────────────────
-    initEditor() {
-        return {
-            edit: (id, newValue) => {
-                const target = this.anime.find(a => a.id === id);
-                if (target) {
-                    target.vital = newValue;
-                    this.log(`✏️ EDIT: ${id} → vital ${newValue.toFixed(2)}`);
-                    return target;
-                }
-                return null;
-            },
-            shuffle: (step, newMove) => {
-                const target = this.shuffle.find(s => s.step === step);
-                if (target) {
-                    target.move = newMove;
-                    this.log(`🔄 SHUFFLE: Step ${step} → ${newMove}`);
-                    return target;
-                }
-                return null;
-            },
-            reset: () => {
-                this.anime = this.initAnime();
-                this.shuffle = this.initShuffle();
-                this.log('⟲ EDITOR RESET');
-                return true;
-            }
-        };
-    },
-
-    // ─── HOLOGRAMM-BEWEIS ──────────────────────────────────────
-    hologramProof() {
-        const proof = {
-            title: '🌀 81-HOLOGRAMM-BEWEIS',
-            total: 81,
-            lebendig: this.anime.filter(a => a.vital > 0.5).length,
-            shuffleCount: this.shuffle.length,
-            co2: this.co2,
-            wasser: this.wasser,
-            sauerstoff: this.sauerstoff,
-            vital: this.vital,
-            frames: this.anime.slice(0, 9) // erste 9 als Beispiel
-        };
-        this.log('🌀 HOLOGRAMM-BEWEIS erstellt');
-        return proof;
-    },
-
-    // ─── LOG ──────────────────────────────────────────────────
-    log(msg) {
-        const zeit = new Date().toISOString();
-        console.log(`[RAWATOR·LIFE] ${msg}`);
-    },
-
-    // ─── STATUS ──────────────────────────────────────────────
-    status() {
-        return {
-            name: this.name,
-            status: this.status,
-            vital: this.vital,
-            co2: this.co2,
-            wasser: this.wasser,
-            sauerstoff: this.sauerstoff,
-            hologramm: this.hologramm.length,
-            anime: this.anime.length,
-            shuffle: this.shuffle.length
-        };
+        // 5. Status‑Overlay (READY / ERRORS)
+        const ready = this.slots.filter(s => s.value >= -0.5 && s.value <= 0.5).length;
+        const errors = 81 - ready;
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillRect(10, 10, 140, 40);
+        ctx.fillStyle = ready === 81 ? '#6bffa9' : '#ffd700';
+        ctx.font = '11px monospace';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText(`READY: ${ready}/81`, 16, 14);
+        ctx.fillStyle = errors > 0 ? '#ff6b8a' : '#6bffa9';
+        ctx.fillText(`ERRORS: ${errors}`, 16, 30);
     }
-};
 
-// ─── AUTO-INIT ──────────────────────────────────────────────────
-RAWATOR_LIFE.init();
+    start() {
+        this.running = true;
+        this.loop();
+    }
 
-export { RAWATOR_LIFE };
+    loop() {
+        if (!this.running) return;
+        this.draw();
+        requestAnimationFrame(() => this.loop());
+    }
+
+    stop() {
+        this.running = false;
+    }
+}
