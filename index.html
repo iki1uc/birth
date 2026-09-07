@@ -1,63 +1,481 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>IKI1UC · Atmospheric Board · Anime Edition</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="iki1uc (Ridvan)">
+    <meta name="license" content="MIT - Nutzung erlaubt. Logik-Reproduktion verboten.">
+    <title>ANIME · 81‑STATION · WASSER</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0a0a12;
+            color: #e0e8f0;
+            font-family: 'Consolas', 'Segoe UI', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(12, 16, 28, 0.7);
+            backdrop-filter: blur(4px);
+            border-radius: 24px;
+            border: 1px solid rgba(100, 200, 255, 0.15);
+            padding: 24px 28px 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+            border-bottom: 1px solid rgba(100, 200, 255, 0.1);
+            padding-bottom: 12px;
+        }
+        header h1 {
+            font-size: 26px;
+            font-weight: 300;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #6cf, #a8d8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        header .badge {
+            background: rgba(100, 200, 255, 0.08);
+            border: 1px solid rgba(100, 200, 255, 0.15);
+            border-radius: 100px;
+            padding: 4px 16px;
+            font-size: 12px;
+            color: #8ab0c0;
+        }
+        .status-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 24px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            border: 1px solid rgba(100, 200, 255, 0.06);
+        }
+        .status-row .item { display: flex; align-items: center; gap: 6px; }
+        .status-row .label { color: #6a7a8a; }
+        .status-row .value { color: #8cf0d0; font-weight: bold; }
+        .status-row .value.err { color: #ff6b6b; }
 
-<style>
-    body {
-        background:#0b0b0b;
-        color:#e0e0e0;
-        font-family:Consolas;
-        padding:20px;
-    }
+        canvas {
+            display: block;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            border-radius: 16px;
+            border: 1px solid rgba(100, 200, 255, 0.08);
+            margin-bottom: 16px;
+            box-shadow: inset 0 0 60px rgba(0,40,80,0.3);
+        }
 
-    h1 {
-        color:#6cf;
-        margin-bottom:10px;
-    }
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .btn {
+            background: rgba(20, 30, 50, 0.6);
+            border: 1px solid rgba(100, 200, 255, 0.12);
+            border-radius: 10px;
+            padding: 8px 6px;
+            color: #b0c8d8;
+            font-family: inherit;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.25s;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        .btn:hover {
+            border-color: #6cf;
+            background: rgba(60, 120, 200, 0.12);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        .btn.primary { border-color: #6cf; color: #6cf; }
+        .btn.primary:hover { background: rgba(60, 120, 200, 0.18); }
+        .btn.warn { border-color: #f0d080; color: #f0d080; }
+        .btn.warn:hover { background: rgba(200, 180, 80, 0.12); }
+        .btn.danger { border-color: #ff6b6b; color: #ff6b6b; }
+        .btn.danger:hover { background: rgba(200, 60, 60, 0.12); }
 
-    #atmoCanvas {
-        background:#000;
-        border:1px solid #333;
-        display:block;
-        margin-top:20px;
-        width:450px;
-        height:450px;
-    }
+        .log-box {
+            background: rgba(0,0,0,0.4);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 12px;
+            color: #7a8a9a;
+            height: 100px;
+            overflow-y: auto;
+            border: 1px solid rgba(100, 200, 255, 0.04);
+            line-height: 1.6;
+            margin-top: 6px;
+        }
+        .log-box::-webkit-scrollbar { width: 3px; }
+        .log-box::-webkit-scrollbar-thumb { background: #2a3a4a; border-radius: 4px; }
 
-    .info {
-        margin-top:10px;
-        font-size:13px;
-        color:#6cf;
-    }
-</style>
+        .footer {
+            text-align: center;
+            color: #3a4a5a;
+            font-size: 10px;
+            margin-top: 12px;
+            border-top: 1px solid rgba(100, 200, 255, 0.04);
+            padding-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 16px; }
+            header h1 { font-size: 20px; }
+            .control-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
 </head>
-
 <body>
 
-<h1>IKI1UC · Atmospheric Board · Anime Edition</h1>
+<div class="container">
 
-<div class="info">
-    Geo‑Matrix · 81‑Anime‑Slots · Wasser‑Shader · Drift‑Pulse · Partikel‑Flow
+    <header>
+        <h1>🌀 ANIME · 81‑STATION · WASSER</h1>
+        <span class="badge">● stehend · 9hoch9</span>
+    </header>
+
+    <!-- Status -->
+    <div class="status-row" id="statusRow">
+        <span class="item"><span class="label">STATE</span> <span class="value" id="stateDisplay">READY</span></span>
+        <span class="item"><span class="label">READY</span> <span class="value" id="readyDisplay">81/81</span></span>
+        <span class="item"><span class="label">ERRORS</span> <span class="value" id="errorsDisplay">0</span></span>
+        <span class="item"><span class="label">SLOTS</span> <span class="value" id="slotsDisplay">81</span></span>
+        <span class="item"><span class="label">MODE</span> <span class="value" id="modeDisplay">anime</span></span>
+    </div>
+
+    <!-- Canvas -->
+    <canvas id="waterCanvas" width="800" height="450"></canvas>
+
+    <!-- Buttons: Reinigung & Steuerung -->
+    <div class="control-grid">
+        <button class="btn primary" id="btnMiss">🌀 MISS</button>
+        <button class="btn primary" id="btnFasil">🌀 FASIL</button>
+        <button class="btn primary" id="btnFix">🔧 FIX</button>
+        <button class="btn primary" id="btnFit">📐 FIT</button>
+        <button class="btn warn" id="btnRecall">⏪ RECALL</button>
+        <button class="btn danger" id="btnRefinal">⚡ REFINAL</button>
+        <button class="btn" id="btnReset">⟲ RESET</button>
+        <button class="btn" id="btnPause">⏸ PAUSE</button>
+    </div>
+
+    <!-- Log -->
+    <div class="log-box" id="logBox">[init] ANIME · Wasser‑Station geladen …</div>
+
+    <div class="footer">⚖️ iki1uc · ANIME · 81‑STATION · stehendes Wasser</div>
 </div>
 
-<!-- CANVAS -->
-<canvas id="atmoCanvas" width="450" height="450"></canvas>
-
-<!-- AtmoBoard laden -->
-<script src="AtmoBoard.js"></script>
-
-<!-- Initialisierung -->
 <script>
-    // Canvas holen
-    const atmoCanvas = document.getElementById('atmoCanvas');
+"use strict";
 
-    // Board erzeugen (9×9 → Wasser‑Anime aktiv)
-    const atmo = new AtmoBoard(atmoCanvas, 9);
+// ================================================================
+//  ANIME · 81‑STATION · WASSER (stehend)
+//  Integriert: 81 Slots (9x9), value/pulse/drift/angle,
+//  Reinigungs‑Funktionen (MISS, FASIL, FIX, FIT, RECALL, REFINAL)
+// ================================================================
 
-    // Starten
-    atmo.start();
+// ─── CANVAS ──────────────────────────────────────────────────────
+const canvas = document.getElementById('waterCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+// ─── STATE ──────────────────────────────────────────────────────
+const TOTAL_SLOTS = 81;
+const COLS = 9, ROWS = 9;
+const CELL_W = W / COLS, CELL_H = H / ROWS;
+
+let slots = [];
+let running = true;
+let time = 0;
+let logEntries = [];
+
+// ─── INIT SLOTS ────────────────────────────────────────────────
+function initSlots() {
+    slots = [];
+    for (let i = 0; i < TOTAL_SLOTS; i++) {
+        slots.push({
+            value: Math.sin(i * 0.2 + 0.5),
+            pulse: 0,
+            drift: 0,
+            angle: (i * 37) % 360,
+            targetValue: Math.sin(i * 0.2 + 0.5),
+            smooth: 0
+        });
+    }
+}
+initSlots();
+
+// ─── STATUS UI ──────────────────────────────────────────────────
+function updateStatus(readyCount, errorsCount) {
+    const ready = readyCount !== undefined ? readyCount : slots.filter(s => Math.abs(s.value) <= 1.5).length;
+    const errors = TOTAL_SLOTS - ready;
+    document.getElementById('readyDisplay').textContent = `${ready}/${TOTAL_SLOTS}`;
+    document.getElementById('errorsDisplay').textContent = errors;
+    document.getElementById('stateDisplay').textContent = errors === 0 ? 'FULL READY' : 'PARTIAL';
+    document.getElementById('slotsDisplay').textContent = TOTAL_SLOTS;
+    document.getElementById('modeDisplay').textContent = 'anime';
+}
+
+// ─── LOG ──────────────────────────────────────────────────────
+function log(msg) {
+    const box = document.getElementById('logBox');
+    const timeStr = new Date().toLocaleTimeString();
+    const entry = document.createElement('div');
+    entry.textContent = `[${timeStr}] ${msg}`;
+    box.appendChild(entry);
+    box.scrollTop = box.scrollHeight;
+    if (box.children.length > 60) box.removeChild(box.firstChild);
+    logEntries.push(msg);
+}
+
+// ─── REINIGUNGS‑FUNKTIONEN ────────────────────────────────────
+
+// MISS – setzt alle Werte auf 0 (Leere)
+function doMiss() {
+    for (const s of slots) {
+        s.value = 0;
+        s.pulse = 0;
+        s.drift = 0;
+        s.angle = 0;
+        s.targetValue = 0;
+    }
+    log('🌀 MISS → alle Slots auf Null gesetzt');
+    updateStatus();
+}
+
+// FASIL – glättet die Werte (gleicht aus)
+function doFasil() {
+    const avg = slots.reduce((sum, s) => sum + s.value, 0) / TOTAL_SLOTS;
+    for (const s of slots) {
+        s.value = s.value * 0.6 + avg * 0.4;
+        s.targetValue = s.value;
+        s.pulse = s.pulse * 0.8;
+        s.drift = s.drift * 0.8;
+    }
+    log('🌀 FASIL → Werte geglättet');
+    updateStatus();
+}
+
+// FIX – korrigiert Ausreißer (clamp)
+function doFix() {
+    let fixed = 0;
+    for (const s of slots) {
+        if (s.value > 1.5 || s.value < -1.5) {
+            s.value = Math.sign(s.value) * 1.2;
+            s.targetValue = s.value;
+            fixed++;
+        }
+        s.pulse = Math.min(Math.max(s.pulse, -1), 1);
+        s.drift = Math.min(Math.max(s.drift, -1), 1);
+        s.angle = ((s.angle % 360) + 360) % 360;
+    }
+    log(`🔧 FIX → ${fixed} Ausreißer korrigiert`);
+    updateStatus();
+}
+
+// FIT – passt alle Werte an eine Sinus‑Kurve an (Harmonie)
+function doFit() {
+    for (let i = 0; i < TOTAL_SLOTS; i++) {
+        const s = slots[i];
+        const phase = i * 0.2 + time * 0.0003;
+        s.targetValue = Math.sin(phase) * 0.9;
+        s.value = s.value * 0.5 + s.targetValue * 0.5;
+        s.pulse = Math.sin(time / 120 + i * 0.1) * 0.6;
+        s.drift = Math.cos(time / 240 + i * 0.05) * 0.5;
+        s.angle = (time / 10 + i * 4) % 360;
+    }
+    log('📐 FIT → Sinus‑Harmonie angelegt');
+    updateStatus();
+}
+
+// RECALL – stellt den letzten gespeicherten Zustand wieder her (hier: reset zu initial)
+function doRecall() {
+    initSlots();
+    log('⏪ RECALL → Anfangszustand wiederhergestellt');
+    updateStatus();
+}
+
+// REFINAL – vollständige Reinigung + Neukalibrierung
+function doRefinal() {
+    for (const s of slots) {
+        s.value = Math.sin(s.angle * Math.PI / 180) * 0.5;
+        s.targetValue = s.value;
+        s.pulse = 0;
+        s.drift = 0;
+        s.angle = (s.angle + 10) % 360;
+    }
+    log('⚡ REFINAL → vollständig neu kalibriert');
+    updateStatus();
+}
+
+// ─── ANIMATION (stehendes Wasser) ──────────────────────────────
+function drawWater() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Hintergrund – tiefes Blau
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
+    grad.addColorStop(0, '#0a0e1a');
+    grad.addColorStop(1, '#0c1828');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Lichtreflexe (stehende Wellen)
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            const idx = r * COLS + c;
+            const slot = slots[idx];
+            const x = c * CELL_W;
+            const y = r * CELL_H;
+
+            // Wellenhöhe (stehende Welle) – value bestimmt die Amplitude
+            const wave = slot.value * 0.5 + 0.5; // 0..1
+            const heightOffset = (wave - 0.5) * CELL_H * 0.4;
+
+            // Farbe – blau mit leichter Variation
+            const brightness = 70 + wave * 80 + slot.pulse * 10;
+            const rCol = 20 + wave * 30;
+            const gCol = 60 + wave * 60 + slot.drift * 10;
+            const bCol = 140 + wave * 80 + slot.pulse * 20;
+            ctx.fillStyle = `rgba(${rCol}, ${gCol}, ${bCol}, 0.25)`;
+            ctx.fillRect(x, y + heightOffset * 0.3, CELL_W, CELL_H * 0.7);
+
+            // Umrandung – sanft
+            ctx.strokeStyle = `rgba(100, 200, 255, ${0.05 + wave * 0.08})`;
+            ctx.lineWidth = 0.5 + wave * 0.5;
+            ctx.strokeRect(x, y + heightOffset * 0.2, CELL_W, CELL_H * 0.6);
+
+            // Partikel (Tröpfchen) – stehend
+            const count = Math.floor(wave * 3) + 1;
+            for (let p = 0; p < count; p++) {
+                const px = x + Math.random() * CELL_W;
+                const py = y + heightOffset * 0.5 + Math.random() * CELL_H * 0.5;
+                const size = 0.5 + wave * 1.5;
+                const alpha = 0.1 + wave * 0.2;
+                ctx.fillStyle = `rgba(180, 240, 255, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(px, py, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Wert‑Anzeige (klein)
+            ctx.fillStyle = `rgba(200, 230, 255, ${0.1 + wave * 0.15})`;
+            ctx.font = '8px Consolas';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(slot.value.toFixed(2), x + CELL_W/2, y + CELL_H - 4);
+        }
+    }
+
+    // Zusätzliche stehende Wellenlinien (horizontal)
+    for (let i = 0; i < 12; i++) {
+        const y = (i / 12) * H;
+        const waveOffset = Math.sin(i * 0.5 + time * 0.0005) * 8;
+        ctx.beginPath();
+        ctx.moveTo(0, y + waveOffset);
+        for (let x = 0; x < W; x += 4) {
+            const val = Math.sin(x * 0.02 + i * 0.3 + time * 0.0008) * 3 + waveOffset;
+            ctx.lineTo(x, y + val);
+        }
+        ctx.strokeStyle = `rgba(100, 200, 255, ${0.02 + 0.03 * (i / 12)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+    }
+
+    // Titel‑Overlay
+    ctx.fillStyle = 'rgba(100, 200, 255, 0.06)';
+    ctx.font = '14px Consolas';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('stehendes Wasser · 81 Slots', W/2, 10);
+}
+
+// ─── UPDATE SLOTS (langsame Drift) ─────────────────────────────
+function updateSlots() {
+    for (const s of slots) {
+        // Sanfte Annäherung an targetValue
+        s.value += (s.targetValue - s.value) * 0.008;
+        // Pulse und Drift leicht verändern
+        s.pulse += Math.sin(time * 0.001 + s.angle * 0.01) * 0.001;
+        s.drift += Math.cos(time * 0.002 + s.angle * 0.02) * 0.001;
+        // Begrenzung
+        s.pulse = Math.min(Math.max(s.pulse, -1), 1);
+        s.drift = Math.min(Math.max(s.drift, -1), 1);
+        s.angle = (s.angle + 0.02) % 360;
+    }
+}
+
+// ─── LOOP ──────────────────────────────────────────────────────
+function loop() {
+    if (running) {
+        time += 16;
+        updateSlots();
+        drawWater();
+        // Status alle 2 Sekunden aktualisieren (nicht zu oft)
+        if (Math.floor(time / 2000) % 2 === 0) {
+            const ready = slots.filter(s => Math.abs(s.value) <= 1.5).length;
+            updateStatus(ready);
+        }
+    }
+    requestAnimationFrame(loop);
+}
+
+// ─── PAUSE ──────────────────────────────────────────────────────
+document.getElementById('btnPause').addEventListener('click', () => {
+    running = !running;
+    document.getElementById('btnPause').textContent = running ? '⏸ PAUSE' : '▶ START';
+    log(running ? '▶ Animation fortgesetzt' : '⏸ Animation pausiert');
+});
+
+// ─── BUTTONS ────────────────────────────────────────────────────
+document.getElementById('btnMiss').addEventListener('click', doMiss);
+document.getElementById('btnFasil').addEventListener('click', doFasil);
+document.getElementById('btnFix').addEventListener('click', doFix);
+document.getElementById('btnFit').addEventListener('click', doFit);
+document.getElementById('btnRecall').addEventListener('click', doRecall);
+document.getElementById('btnRefinal').addEventListener('click', doRefinal);
+document.getElementById('btnReset').addEventListener('click', () => {
+    initSlots();
+    log('⟲ Reset → Slots neu initialisiert');
+    updateStatus();
+});
+
+// ─── TASTATUR ──────────────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+    if (e.key === ' ') { e.preventDefault(); document.getElementById('btnPause').click(); }
+    if (e.key === 'm') doMiss();
+    if (e.key === 'f') doFasil();
+    if (e.key === 'x') doFix();
+    if (e.key === 't') doFit();
+    if (e.key === 'r') doRecall();
+    if (e.key === 'R') doRefinal();
+});
+
+// ─── INIT ──────────────────────────────────────────────────────
+log('🌀 ANIME · 81‑STATION · stehendes Wasser gestartet');
+log('📐 Slots: 81 (9x9) · Modus: anime');
+log('⌨️  Leertaste=Pause  m=MISS  f=FASIL  x=FIX  t=FIT  r=RECALL  R=REFINAL');
+updateStatus();
+loop();
+
 </script>
 
 </body>
